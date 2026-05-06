@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ایڈمن پینل | Makkah Madina Tour</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #d4a843;
+    --green: #1a4731;
+    --green-mid: #2d6b4e;
+    --dark: #0d1f17;
+  }
+  body {
+    background: var(--dark);
+    color: #fff;
+    font-family: 'Amiri', serif;
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(90deg, var(--dark), var(--green));
+    border-bottom: 1px solid rgba(212,168,67,.3);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 { font-size: 1.5rem; color: var(--gold); }
+  header a { color: rgba(255,255,255,.5); text-decoration: none; font-size: .9rem; }
+  header a:hover { color: var(--gold); }
+
+  .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+
+  /* ─── Cards ─── */
+  .card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(212,168,67,.15);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .card h2 {
+    font-size: 1.2rem;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(212,168,67,.2);
+    padding-bottom: .5rem;
+  }
+
+  /* ─── Form ─── */
+  .form-row { margin-bottom: 1rem; }
+  label { display: block; color: rgba(255,255,255,.6); font-size: .85rem; margin-bottom: .4rem; letter-spacing: .05em; }
+  select, input[type="text"] {
+    width: 100%;
+    padding: .7rem .9rem;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 8px;
+    color: #fff;
+    font-size: .95rem;
+    outline: none;
+    transition: border-color .25s;
+  }
+  select:focus, input:focus { border-color: var(--gold); }
+  select option { background: #1a4731; }
+
+  /* ─── File Drop Zone ─── */
+  .drop-zone {
+    border: 2px dashed rgba(212,168,67,.3);
+    border-radius: 12px;
+    padding: 2.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all .25s;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--gold);
+    background: rgba(212,168,67,.05);
+  }
+  .drop-zone input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .drop-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+  .drop-text { color: rgba(255,255,255,.6); font-size: .9rem; }
+  .drop-hint { color: rgba(255,255,255,.35); font-size: .75rem; margin-top: .3rem; }
+
+  /* ─── Preview ─── */
+  #preview-container {
+    display: none;
+    margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #preview-img { width: 100%; max-height: 200px; object-fit: cover; }
+
+  /* ─── Button ─── */
+  .btn-upload {
+    width: 100%;
+    padding: .9rem;
+    background: linear-gradient(135deg, var(--green-mid), var(--green));
+    color: var(--gold);
+    border: 1px solid rgba(212,168,67,.4);
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: 'Amiri', serif;
+    transition: all .25s;
+    margin-top: 1rem;
+  }
+  .btn-upload:hover { background: linear-gradient(135deg, #3d8c65, var(--green-mid)); }
+  .btn-upload:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ─── Progress Bar ─── */
+  #progress-wrap { display: none; margin-top: 1rem; }
+  #progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: .5rem;
+  }
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-mid), var(--gold));
+    border-radius: 3px;
+    width: 0;
+    transition: width .3s;
+  }
+  #progress-text { color: rgba(255,255,255,.5); font-size: .8rem; text-align: center; }
+
+  /* ─── Alert ─── */
+  .alert {
+    padding: .8rem 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: .9rem;
+    display: none;
+  }
+  .alert.success { background: rgba(74,158,118,.2); border: 1px solid var(--green-mid); color: #7ed6a8; }
+  .alert.error   { background: rgba(200,50,50,.2);  border: 1px solid #c83232; color: #ff9999; }
+
+  /* ─── Image Grid ─── */
+  .img-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: .75rem;
+    margin-top: 1rem;
+  }
+  .img-item {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.1);
+    cursor: pointer;
+    transition: transform .2s;
+    position: relative;
+  }
+  .img-item:hover { transform: scale(1.03); border-color: var(--gold); }
+  .img-item img { width: 100%; height: 80px; object-fit: cover; display: block; }
+  .img-name {
+    padding: .3rem .5rem;
+    font-size: .65rem;
+    color: rgba(255,255,255,.5);
+    background: rgba(0,0,0,.4);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .loc-tabs {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: 1rem;
+  }
+  .loc-tab {
+    padding: .4rem .9rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.15);
+    background: transparent;
+    color: rgba(255,255,255,.5);
+    cursor: pointer;
+    font-size: .85rem;
+    transition: all .2s;
+  }
+  .loc-tab.active { background: rgba(212,168,67,.15); border-color: var(--gold); color: var(--gold); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚙️ ایڈمن پینل | Admin Panel</h1>
+  <div style="display:flex;gap:1rem;">
+    <a href="/tour?type=makkah">🕋 مکہ ٹور</a>
+    <a href="/tour?type=madina">🌿 مدینہ ٹور</a>
+    <a href="/">🏠 ہوم</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Upload Section -->
+  <div class="card">
+    <h2>📤 نئی پینورامک تصویر اپلوڈ کریں</h2>
+
+    <div class="form-row">
+      <label>مقام (Location)</label>
+      <select id="location">
+        <option value="makkah">🕋 مکہ مکرمہ</option>
+        <option value="madina">🌿 مدینہ منورہ</option>
+      </select>
+    </div>
+
+    <div class="form-row" id="sceneRow">
+      <label>قدم / Scene ID (اختیاری)</label>
+      <select id="scene_id">
+        <option value="">-- کوئی قدم منتخب کریں --</option>
+      </select>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" onchange="previewFile(this)">
+      <div class="drop-icon">🖼️</div>
+      <div class="drop-text">یہاں تصویر چھوڑیں یا کلک کریں</div>
+      <div class="drop-hint">JPG، PNG، WebP • زیادہ سے زیادہ 80MB • 4096×2048 بہترین</div>
+    </div>
+
+    <div id="preview-container">
+      <img id="preview-img" alt="Preview">
+    </div>
+
+    <div id="progress-wrap">
+      <div id="progress-bar"><div id="progress-fill"></div></div>
+      <div id="progress-text">اپلوڈ ہو رہا ہے...</div>
+    </div>
+
+    <div class="alert success" id="alert-success">✅ تصویر کامیابی سے اپلوڈ ہو گئی!</div>
+    <div class="alert error"   id="alert-error">❌ ایرر: اپلوڈ نہیں ہوا</div>
+
+    <button class="btn-upload" id="btnUpload" onclick="uploadFile()">⬆️ اپلوڈ کریں</button>
+  </div><!-- /card -->
+
+  <!-- Image Gallery -->
+  <div class="card">
+    <h2>🖼️ موجودہ تصاویر</h2>
+    <div class="loc-tabs">
+      <button class="loc-tab active" onclick="loadImages('makkah', this)">🕋 مکہ</button>
+      <button class="loc-tab"       onclick="loadImages('madina', this)">🌿 مدینہ</button>
+    </div>
+    <div class="img-grid" id="imgGrid">
+      <div style="color:rgba(255,255,255,.4);font-size:.85rem;">لوڈ ہو رہا ہے...</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ─── Load tour data for scene selector ───────────────────────────────────
+let tourConfig = {};
+
+async function loadTourConfig() {
+  try {
+    const res = await fetch('/api/tour');
+    tourConfig = await res.json();
+    updateSceneSelector('makkah');
+  } catch(e) { console.error(e); }
+}
+
+function updateSceneSelector(loc) {
+  const sel = document.getElementById('scene_id');
+  sel.innerHTML = '<option value="">-- کوئی قدم منتخب کریں --</option>';
+  (tourConfig[loc] || []).forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.step}. ${s.titleUrdu}`;
+    sel.appendChild(opt);
+  });
+}
+
+document.getElementById('location').addEventListener('change', e => {
+  updateSceneSelector(e.target.value);
+  loadImages(e.target.value);
+});
+
+// ─── Preview ─────────────────────────────────────────────────────────────
+function previewFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  document.getElementById('preview-img').src = url;
+  document.getElementById('preview-container').style.display = 'block';
+  hideAlerts();
+}
+
+// Drag-drop highlight
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  const fi = document.getElementById('fileInput');
+  fi.files = e.dataTransfer.files;
+  previewFile(fi);
+});
+
+// ─── Upload ──────────────────────────────────────────────────────────────
+async function uploadFile() {
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) { showAlert('error', '⚠️ پہلے تصویر منتخب کریں'); return; }
+
+  const loc  = document.getElementById('location').value;
+  const scId = document.getElementById('scene_id').value;
+
+  const fd = new FormData();
+  fd.append('panorama', file);
+  fd.append('location', loc);
+  if (scId) fd.append('scene_id', scId);
+
+  document.getElementById('btnUpload').disabled = true;
+  document.getElementById('progress-wrap').style.display = 'block';
+  hideAlerts();
+
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', e => {
+      if (e.lengthComputable) {
+        const pct = Math.round(e.loaded / e.total * 100);
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('progress-text').textContent = `اپلوڈ ہو رہا ہے: ${pct}%`;
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      document.getElementById('progress-wrap').style.display = 'none';
+      document.getElementById('btnUpload').disabled = false;
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+        showAlert('success', `✅ کامیاب! تصویر محفوظ: ${data.path}`);
+        loadImages(loc);
+        // reset file input
+        document.getElementById('fileInput').value = '';
+        document.getElementById('preview-container').style.display = 'none';
+      } else {
+        showAlert('error', '❌ اپلوڈ ناکام: ' + xhr.responseText);
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      document.getElementById('progress-wrap').style.display = 'none';
+      document.getElementById('btnUpload').disabled = false;
+      showAlert('error', '❌ نیٹ ورک ایرر');
+    });
+
+    xhr.open('POST', '/api/upload');
+    xhr.send(fd);
+  } catch(err) {
+    showAlert('error', '❌ ' + err.message);
+    document.getElementById('btnUpload').disabled = false;
+  }
+}
+
+// ─── Load Image Gallery ──────────────────────────────────────────────────
+async function loadImages(loc, tabEl) {
+  // Update tabs
+  if (tabEl) {
+    document.querySelectorAll('.loc-tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+  }
+
+  const grid = document.getElementById('imgGrid');
+  grid.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:.85rem;">لوڈ ہو رہا ہے...</div>';
+
+  try {
+    const res   = await fetch(`/api/images/${loc}`);
+    const files = await res.json();
+
+    if (!files.length) {
+      grid.innerHTML = '<div style="color:rgba(255,255,255,.3);">کوئی تصویر نہیں</div>';
+      return;
+    }
+
+    grid.innerHTML = '';
+    files.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'img-item';
+      div.title = f.name;
+      div.innerHTML = `<img src="${f.path}" alt="${f.name}" loading="lazy"><div class="img-name">${f.name}</div>`;
+      div.onclick = () => window.open(f.path, '_blank');
+      grid.appendChild(div);
+    });
+  } catch(e) {
+    grid.innerHTML = '<div style="color:#ff9999;">ایرر: لوڈ نہیں ہوا</div>';
+  }
+}
+
+function showAlert(type, msg) {
+  hideAlerts();
+  const el = document.getElementById('alert-' + type);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+function hideAlerts() {
+  ['success','error'].forEach(t => {
+    const el = document.getElementById('alert-' + t);
+    if (el) el.style.display = 'none';
+  });
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+loadTourConfig();
+loadImages('makkah');
+</script>
+</body>
+</html>

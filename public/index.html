@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مکہ مدینہ ورچوئل ٹور | Sacred Virtual Tour</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#d4a843;--gold2:#f0c970;--green:#1a4731;--green2:#2d6b4e;--dark:#060e0a}
+html,body{height:100%;overflow:hidden;background:var(--dark)}
+
+/* ── BACKGROUND PANORAMA ── */
+#bg {
+  position:fixed;inset:0;
+  background:url('/images/makkah/01_masjid_exterior.jpg') center/cover no-repeat;
+  animation:slow-pan 30s linear infinite alternate;
+  transform-origin:center;
+  filter:brightness(.35) saturate(1.2);
+}
+@keyframes slow-pan{from{transform:scale(1.08) translateX(-3%)}to{transform:scale(1.08) translateX(3%)}}
+
+/* ── OVERLAY ── */
+#overlay{
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(13,40,25,.2) 0%, rgba(6,14,10,.85) 60%),
+    linear-gradient(180deg, rgba(6,14,10,.6) 0%, transparent 30%, transparent 70%, rgba(6,14,10,.95) 100%);
+  pointer-events:none;
+}
+
+/* Islamic geometric SVG pattern */
+#pattern{
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23d4a843' stroke-width='.25' opacity='.12'%3E%3Cpolygon points='30,4 56,19 56,41 30,56 4,41 4,19'/%3E%3Ccircle cx='30' cy='30' r='10'/%3E%3Cline x1='30' y1='4' x2='30' y2='56'/%3E%3Cline x1='4' y1='19' x2='56' y2='41'/%3E%3Cline x1='4' y1='41' x2='56' y2='19'/%3E%3C/g%3E%3C/svg%3E");
+  pointer-events:none;opacity:.6;
+}
+
+/* Stars */
+#stars{position:fixed;inset:0;pointer-events:none}
+.star{
+  position:absolute;background:#fff;border-radius:50%;
+  animation:twinkle var(--d,3s) infinite alternate var(--dl,0s);
+}
+@keyframes twinkle{from{opacity:.1}to{opacity:.9}}
+
+/* ── MAIN CONTENT ── */
+#content{
+  position:relative;z-index:10;
+  height:100%;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:1.5rem;
+  overflow-y:auto;
+}
+
+/* Bismillah */
+.bismillah{
+  font-family:'Amiri',serif;
+  font-size:clamp(1.4rem,4vw,2.2rem);
+  color:var(--gold);
+  text-shadow:0 0 30px rgba(212,168,67,.5);
+  text-align:center;
+  margin-bottom:.5rem;
+  animation:fadeDown .8s ease both;
+}
+
+/* Kaaba icon */
+.hero-icon{
+  font-size:clamp(3.5rem,10vw,5.5rem);
+  margin:.3rem 0;
+  animation:float 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 24px rgba(212,168,67,.5));
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+/* Title */
+.main-title{
+  font-family:'Amiri',serif;
+  font-size:clamp(1.8rem,5vw,3.2rem);
+  font-weight:700;
+  color:var(--gold2);
+  text-align:center;
+  line-height:1.3;
+  text-shadow:0 2px 20px rgba(0,0,0,.8);
+  animation:fadeDown .9s ease .1s both;
+}
+.sub-title{
+  font-family:'Noto Nastaliq Urdu',serif;
+  font-size:clamp(.9rem,2.5vw,1.2rem);
+  color:rgba(255,255,255,.7);
+  text-align:center;
+  margin:.4rem 0;
+  animation:fadeDown 1s ease .2s both;
+}
+.en-title{
+  font-family:Georgia,serif;
+  font-size:.85rem;
+  color:rgba(255,255,255,.35);
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  text-align:center;
+  margin-bottom:1.2rem;
+  animation:fadeDown 1s ease .25s both;
+}
+
+/* Divider */
+.divider{
+  width:200px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin:.8rem auto 1.5rem;
+  animation:fadeDown 1s ease .3s both;
+}
+
+/* ── TOUR CARDS ── */
+.cards{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  width:100%;max-width:680px;
+  animation:fadeUp 1s ease .4s both;
+}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}
+@keyframes fadeUp  {from{opacity:0;transform:translateY( 20px)}to{opacity:1;transform:none}}
+
+.card{
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  cursor:pointer;
+  text-decoration:none;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.12);
+  transition:transform .3s,box-shadow .3s;
+  background:rgba(0,0,0,.4);
+  backdrop-filter:blur(12px);
+}
+.card:hover{transform:translateY(-6px) scale(1.02);box-shadow:0 24px 60px rgba(0,0,0,.5);}
+
+/* Card background image */
+.card-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  transition:transform .4s ease;
+  filter:brightness(.4);
+}
+.card:hover .card-bg{transform:scale(1.06);}
+
+.card-makkah .card-bg{background-image:url('/images/makkah/02_kaaba.jpg');}
+.card-madina .card-bg{background-image:url('/images/madina/02_green_dome.jpg');}
+
+.card-body{
+  position:relative;z-index:2;
+  padding:1.5rem 1.2rem 1.2rem;
+}
+.card-tag{
+  display:inline-block;
+  padding:3px 12px;
+  border-radius:20px;
+  font-size:.7rem;
+  font-family:monospace;
+  letter-spacing:.08em;
+  margin-bottom:.8rem;
+}
+.card-makkah .card-tag{background:rgba(212,168,67,.2);color:var(--gold2);border:1px solid var(--gold);}
+.card-madina .card-tag{background:rgba(120,190,240,.15);color:#8dd4f0;border:1px solid #5ba8d0;}
+
+.card-icon{font-size:2.5rem;margin-bottom:.5rem;display:block;}
+.card-arabic{
+  font-family:'Amiri',serif;
+  font-size:1.6rem;font-weight:700;
+  color:var(--gold2);
+  line-height:1.3;
+  margin-bottom:.2rem;
+}
+.card-urdu{
+  font-family:'Noto Nastaliq Urdu',serif;
+  font-size:.9rem;
+  color:rgba(255,255,255,.75);
+  margin-bottom:.5rem;
+}
+.card-desc{
+  font-size:.78rem;
+  color:rgba(255,255,255,.5);
+  line-height:1.7;
+  direction:rtl;text-align:right;
+}
+.card-steps{
+  margin-top:.8rem;
+  padding-top:.7rem;
+  border-top:1px solid rgba(255,255,255,.1);
+  font-size:.72rem;
+  color:rgba(255,255,255,.4);
+  text-align:center;
+  letter-spacing:.05em;
+  font-family:monospace;
+}
+.card-arrow{
+  position:absolute;bottom:16px;right:16px;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;
+  transition:all .2s;
+}
+.card:hover .card-arrow{background:rgba(212,168,67,.3);border-color:var(--gold);}
+
+/* ── FEATURES ── */
+.features{
+  display:flex;flex-wrap:wrap;gap:10px;
+  justify-content:center;
+  margin-top:1.2rem;
+  animation:fadeUp 1s ease .5s both;
+}
+.feat{
+  display:flex;align-items:center;gap:5px;
+  font-size:.75rem;color:rgba(255,255,255,.4);
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  padding:4px 12px;
+}
+
+/* ── FOOTER ── */
+footer{
+  position:fixed;bottom:0;left:0;right:0;
+  text-align:center;padding:8px;
+  z-index:10;
+}
+footer a{color:rgba(212,168,67,.3);font-size:.7rem;text-decoration:none;letter-spacing:.08em;}
+footer a:hover{color:var(--gold);}
+
+/* Responsive */
+@media(max-width:520px){
+  .cards{grid-template-columns:1fr;max-width:360px;}
+  .hero-icon{font-size:3rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div id="bg"></div>
+<div id="overlay"></div>
+<div id="pattern"></div>
+<div id="stars"></div>
+
+<!-- Content -->
+<div id="content">
+
+  <p class="bismillah">بِسْمِ اللَّهِ الرَّحْمٰنِ الرَّحِيْمِ</p>
+
+  <div class="hero-icon">🕋</div>
+
+  <h1 class="main-title">مَكَّة الْمُكَرَّمَة  •  الْمَدِيْنَة الْمُنَوَّرَة</h1>
+  <p class="sub-title">۳۶۰° ورچوئل عمرہ اور مدینہ زیارت</p>
+  <p class="en-title">360° Virtual Sacred Tour</p>
+  <div class="divider"></div>
+
+  <div class="cards">
+
+    <a href="/tour?type=makkah" class="card card-makkah">
+      <div class="card-bg"></div>
+      <div class="card-body">
+        <div class="card-tag">🕋 MAKKAH AL-MUKARRAMAH</div>
+        <span class="card-icon">🕋</span>
+        <div class="card-arabic">مَكَّة الْمُكَرَّمَة</div>
+        <div class="card-urdu">عمرہ کا مکمل ورچوئل سفر</div>
+        <div class="card-desc">کعبہ طواف، حجر اسود، زمزم، صفا مروہ — قدم بقدم مکمل عمرہ</div>
+        <div class="card-steps">12 STEPS • طواف • سعی • زمزم • مقام ابراہیم</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="/tour?type=madina" class="card card-madina">
+      <div class="card-bg"></div>
+      <div class="card-body">
+        <div class="card-tag">🌿 MADINAH AL-MUNAWWARAH</div>
+        <span class="card-icon">🌿</span>
+        <div class="card-arabic">الْمَدِيْنَة الْمُنَوَّرَة</div>
+        <div class="card-urdu">مدینہ کی مقدس زیارت</div>
+        <div class="card-desc">مسجد نبوی، روضہ رسول ﷺ، ریاض الجنۃ، قباء مسجد، جنت البقیع</div>
+        <div class="card-steps">8 STEPS • روضہ • ریاض الجنۃ • قباء • بقیع</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+  </div>
+
+  <div class="features">
+    <span class="feat">🔄 360° ورچوئل ویو</span>
+    <span class="feat">⬤ فلور ہاٹ اسپاٹس</span>
+    <span class="feat">🤲 عربی دعائیں</span>
+    <span class="feat">📱 موبائل فرینڈلی</span>
+    <span class="feat">🖥️ فل اسکرین</span>
+    <span class="feat">⌨️ کی بورڈ کنٹرول</span>
+  </div>
+
+</div>
+
+<footer>
+  <a href="/admin">⚙️ ADMIN PANEL</a>
+</footer>
+
+<script>
+// Stars
+const s = document.getElementById('stars');
+for(let i=0;i<100;i++){
+  const el = document.createElement('div');
+  el.className='star';
+  const sz = Math.random()<.2 ? 3 : 2;
+  el.style.cssText=`
+    left:${Math.random()*100}%;top:${Math.random()*100}%;
+    width:${sz}px;height:${sz}px;
+    --d:${2+Math.random()*4}s;--dl:${Math.random()*4}s;
+    opacity:${.1+Math.random()*.7};
+  `;
+  s.appendChild(el);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>مکہ مدینہ ورچوئل ٹور | 360°</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#d4a843; --gold2:#f0c970;
+  --green:#1a4731; --green2:#2d6b4e;
+  --dark:#070e0a;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Amiri',serif;}
+
+/* ══════════════════════════════════════
+   TRUE 360° CSS 3D CYLINDER VIEWER
+   User is INSIDE the cylinder - looks
+   in all directions like a real sphere
+══════════════════════════════════════ */
+
+/* Outermost: sets the perspective point (the "eye") */
+#scene{
+  position:fixed;inset:0;
+  perspective:800px;
+  perspective-origin:50% 50%;
+  overflow:hidden;
+  cursor:grab;
+  user-select:none;
+  -webkit-user-select:none;
+}
+#scene.dragging{cursor:grabbing;}
+
+/* Camera wrapper — rotating this changes WHERE the user looks */
+#camera{
+  position:absolute;
+  width:100%;height:100%;
+  transform-style:preserve-3d;
+  /* default: rotateX(pitch) rotateY(-yaw) */
+  transform:rotateX(0deg) rotateY(0deg);
+  will-change:transform;
+}
+
+/* The cylinder — all faces live here */
+#cylinder{
+  position:absolute;
+  width:100%;height:100%;
+  transform-style:preserve-3d;
+}
+
+/* Each panorama face — 36 faces = every 10° */
+.pano-face{
+  position:absolute;
+  /* width & height set by JS */
+  top:0;left:0;
+  background-repeat:no-repeat;
+  background-size:3600% 120%;   /* 36 faces × 100% = fits full image */
+  background-position:center center;
+  /* transform: rotateY(angle) translateZ(radius) — set by JS */
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+
+/* ── Floor hotspots (inside 3D scene) ── */
+.hs-3d{
+  position:absolute;
+  top:50%;left:50%;
+  width:80px;height:80px;
+  margin:-40px -40px;
+  transform-style:preserve-3d;
+  cursor:pointer;
+  pointer-events:all;
+  /* transform set by JS: rotateY(angle) translateZ(d) translateY(floor) rotateX(90deg) */
+}
+.hs-svg{
+  width:100%;height:100%;
+  filter:drop-shadow(0 0 16px rgba(255,255,255,.9));
+  animation:hs-pulse 1.8s ease-in-out infinite;
+}
+@keyframes hs-pulse{
+  0%,100%{transform:scale(1);opacity:.95;}
+  50%{transform:scale(1.2);opacity:.6;}
+}
+.hs-ring-outer{animation:hs-expand 1.8s ease-out infinite;}
+.hs-ring-inner{animation:hs-expand 1.8s ease-out infinite .5s;}
+@keyframes hs-expand{
+  0%{r:18;opacity:.8;}100%{r:34;opacity:0;}
+}
+
+/* ── Vignette overlay ── */
+#vignette{
+  position:fixed;inset:0;z-index:5;
+  background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.6) 100%);
+  pointer-events:none;
+}
+
+/* ══════════════════════════════════════
+   TOP HUD
+══════════════════════════════════════ */
+#top-hud{
+  position:fixed;top:0;left:0;right:0;z-index:30;
+  padding:12px 16px;
+  background:linear-gradient(to bottom,rgba(0,0,0,.75),transparent);
+  display:flex;align-items:center;justify-content:space-between;
+  pointer-events:none;
+}
+.hud-left{display:flex;align-items:center;gap:10px;}
+.hud-badge{
+  background:rgba(0,0,0,.6);
+  border:1px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(8px);
+  border-radius:20px;
+  padding:5px 14px;
+  color:#fff;font-size:13px;font-family:monospace;
+  pointer-events:all;
+}
+.hud-badge em{color:var(--gold2);font-style:normal;}
+.hud-title{
+  font-family:'Amiri',serif;font-size:1.25rem;
+  color:var(--gold2);text-shadow:0 2px 8px rgba(0,0,0,.9);direction:rtl;
+}
+.hud-right{pointer-events:all;display:flex;gap:8px;}
+.hud-btn{
+  background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.7);border-radius:8px;padding:6px 12px;
+  cursor:pointer;font-size:13px;backdrop-filter:blur(6px);
+  transition:all .2s;text-decoration:none;
+}
+.hud-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
+
+/* ══════════════════════════════════════
+   INFO CARD  (bottom-left)
+══════════════════════════════════════ */
+#info-card{
+  position:fixed;bottom:140px;left:16px;z-index:30;
+  width:300px;
+  background:rgba(5,14,9,.9);
+  border:1px solid rgba(212,168,67,.3);
+  border-radius:14px;
+  backdrop-filter:blur(18px);
+  transition:opacity .3s,transform .3s;
+}
+#info-card.hidden{opacity:0;transform:translateX(-20px);pointer-events:none;}
+.ic-header{
+  padding:12px 14px 8px;
+  border-bottom:1px solid rgba(212,168,67,.15);
+  display:flex;justify-content:space-between;align-items:flex-start;
+}
+.ic-badge{
+  display:inline-block;padding:2px 10px;border-radius:20px;
+  background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.35);
+  color:var(--gold2);font-size:11px;letter-spacing:.07em;font-family:monospace;
+}
+.ic-toggle{
+  background:none;border:none;color:rgba(255,255,255,.4);
+  font-size:1rem;cursor:pointer;line-height:1;padding:2px 4px;
+}
+.ic-toggle:hover{color:#fff;}
+.ic-body{padding:10px 14px 12px;}
+.ic-icon{font-size:1.6rem;margin-bottom:3px;}
+.ic-arabic{
+  font-family:'Amiri',serif;font-size:1.2rem;font-weight:700;
+  color:var(--gold2);direction:rtl;text-align:right;line-height:1.3;
+}
+.ic-urdu{
+  font-family:'Noto Nastaliq Urdu',serif;font-size:.82rem;
+  color:rgba(255,255,255,.72);direction:rtl;text-align:right;
+  line-height:1.7;margin-top:4px;
+}
+.ic-divider{height:1px;background:rgba(212,168,67,.12);margin:8px 0;}
+.ic-dua-label{font-size:10px;color:var(--gold);letter-spacing:.08em;font-family:monospace;margin-bottom:3px;}
+.ic-dua{
+  font-family:'Amiri',serif;font-size:.95rem;color:rgba(255,255,255,.88);
+  direction:rtl;text-align:right;line-height:2;
+}
+.ic-meaning{font-size:.73rem;color:rgba(255,255,255,.42);direction:rtl;text-align:right;line-height:1.6;margin-top:3px;}
+.ic-tip{
+  margin-top:8px;border-left:2px solid var(--gold);
+  padding:5px 8px;
+  font-family:'Noto Nastaliq Urdu',serif;font-size:.76rem;
+  color:rgba(255,255,255,.6);direction:rtl;text-align:right;line-height:1.6;
+}
+
+/* ══════════════════════════════════════
+   NAV ARROWS  (right side)
+══════════════════════════════════════ */
+#nav-btns{
+  position:fixed;bottom:148px;right:16px;z-index:30;
+  display:flex;flex-direction:column;gap:8px;
+}
+.nav-btn{
+  width:50px;height:50px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(0,0,0,.55);backdrop-filter:blur(8px);
+  color:#fff;font-size:1.2rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.nav-btn:hover{background:rgba(212,168,67,.25);border-color:var(--gold);}
+.nav-btn:disabled{opacity:.2;cursor:default;}
+.nav-next{
+  width:54px;height:54px;font-size:1.4rem;
+  background:linear-gradient(135deg,var(--green2),var(--green));
+  border-color:rgba(212,168,67,.4);
+}
+
+/* ══════════════════════════════════════
+   BOTTOM THUMBNAIL STRIP
+══════════════════════════════════════ */
+#strip-wrap{
+  position:fixed;bottom:0;left:0;right:0;z-index:30;
+  background:linear-gradient(to top,rgba(0,0,0,.92) 70%,transparent 100%);
+  padding:8px 12px 10px;
+}
+#strip{
+  display:flex;gap:8px;
+  overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;
+  scroll-snap-type:x mandatory;
+}
+#strip::-webkit-scrollbar{display:none;}
+.thumb{
+  flex-shrink:0;width:78px;border-radius:8px;overflow:hidden;
+  cursor:pointer;border:2px solid transparent;
+  transition:all .2s;background:#111;position:relative;
+  scroll-snap-align:start;
+}
+.thumb.active{border-color:var(--gold);}
+.thumb:hover{transform:translateY(-3px);}
+.thumb-img{width:100%;height:50px;object-fit:cover;display:block;}
+.thumb-n{
+  position:absolute;top:2px;left:3px;
+  background:rgba(0,0,0,.65);color:#fff;
+  font-size:9px;border-radius:3px;padding:1px 4px;font-family:monospace;
+}
+.thumb-lbl{
+  padding:3px 4px;font-size:9px;
+  color:rgba(255,255,255,.6);text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-family:'Amiri',serif;direction:rtl;
+}
+.thumb.active .thumb-lbl{color:var(--gold2);}
+
+/* ══════════════════════════════════════
+   LOADER
+══════════════════════════════════════ */
+#loader{
+  position:fixed;inset:0;z-index:200;
+  background:radial-gradient(ellipse at center,#0d2a1a 0%,#000 100%);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  transition:opacity .7s ease;
+}
+#loader.out{opacity:0;pointer-events:none;}
+.ld-icon{font-size:5rem;animation:fl 2s ease-in-out infinite;}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.ld-title{
+  font-family:'Amiri',serif;font-size:1.8rem;
+  color:var(--gold2);margin:12px 0 4px;text-align:center;
+}
+.ld-sub{color:rgba(255,255,255,.4);font-size:.8rem;letter-spacing:.1em;}
+.ld-bar{width:160px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:16px;overflow:hidden;}
+.ld-fill{height:100%;background:linear-gradient(90deg,var(--green2),var(--gold));border-radius:2px;animation:ld 2s ease-out forwards;}
+@keyframes ld{from{width:0}to{width:100%}}
+
+/* ══════════════════════════════════════
+   COMPLETION SCREEN
+══════════════════════════════════════ */
+#complete{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:radial-gradient(ellipse at 50% 55%,rgba(45,107,78,.5) 0%,rgba(0,0,0,.96) 65%);
+  flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:2rem;
+}
+#complete.show{display:flex;}
+.cp-icon{font-size:5rem;animation:fl 3s ease-in-out infinite;}
+.cp-title{font-family:'Amiri',serif;font-size:2.8rem;color:var(--gold2);margin:.5rem 0;}
+.cp-msg{
+  font-family:'Noto Nastaliq Urdu',serif;font-size:1.1rem;
+  color:rgba(255,255,255,.8);max-width:420px;line-height:2;
+  direction:rtl;text-align:center;margin:1rem 0;
+}
+.cp-dua{font-family:'Amiri',serif;font-size:1.3rem;color:var(--gold);margin:.5rem 0;line-height:2;}
+.cp-btns{display:flex;gap:12px;margin-top:1.5rem;flex-wrap:wrap;justify-content:center;}
+.cbtn{
+  padding:.75rem 1.6rem;border-radius:30px;font-size:.9rem;
+  cursor:pointer;text-decoration:none;transition:all .25s;
+}
+.cbtn:hover{transform:scale(1.04);}
+.cbtn-p{background:linear-gradient(135deg,var(--green2),var(--green));color:var(--gold2);border:1px solid rgba(212,168,67,.4);}
+.cbtn-s{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);}
+
+/* ══════════════════════════════════════
+   DRAG HINT
+══════════════════════════════════════ */
+#drag-hint{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:40;
+  background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.2);
+  border-radius:24px;padding:8px 20px;
+  color:rgba(255,255,255,.7);font-size:13px;letter-spacing:.04em;
+  pointer-events:none;transition:opacity .8s;text-align:center;
+  animation:hint-pulse 2s ease-in-out infinite;
+}
+@keyframes hint-pulse{0%,100%{opacity:.9}50%{opacity:.5}}
+#drag-hint.hide{opacity:0;}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="ld-icon" id="ldIcon">🕋</div>
+  <div class="ld-title" id="ldTitle">لوڈ ہو رہا ہے...</div>
+  <div class="ld-sub">VIRTUAL SACRED TOUR • 360°</div>
+  <div class="ld-bar"><div class="ld-fill"></div></div>
+</div>
+
+<!-- TRUE 360° SCENE -->
+<div id="scene">
+  <div id="camera">
+    <div id="cylinder">
+      <!-- Panorama faces + floor hotspots injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Edge vignette -->
+<div id="vignette"></div>
+
+<!-- DRAG HINT -->
+<div id="drag-hint">🔄 &nbsp; Mouse se chaaro taraf ghumaain &nbsp; 🔄<br><small style="opacity:.6">← Drag → &nbsp;|&nbsp; ↑ Upar bhi dekh sakte hain ↓</small></div>
+
+<!-- TOP HUD -->
+<div id="top-hud">
+  <div class="hud-left">
+    <div class="hud-badge">🔄 360° &nbsp;|&nbsp; <em id="hudStep">1/12</em></div>
+    <div class="hud-title" id="hudTitle">لوڈ ہو رہا ہے</div>
+  </div>
+  <div class="hud-right">
+    <a href="/" class="hud-btn">🏠</a>
+    <button class="hud-btn" onclick="toggleFullscreen()">⛶</button>
+    <button class="hud-btn" id="btnAR" onclick="toggleInfo()">☰</button>
+  </div>
+</div>
+
+<!-- INFO CARD -->
+<div id="info-card">
+  <div class="ic-header">
+    <div>
+      <div class="ic-badge" id="icBadge">Step 1</div>
+    </div>
+    <button class="ic-toggle" onclick="toggleInfo()">✕</button>
+  </div>
+  <div class="ic-body">
+    <div class="ic-icon" id="icIcon">🕌</div>
+    <div class="ic-arabic" id="icArabic"></div>
+    <div class="ic-urdu" id="icUrdu"></div>
+    <div class="ic-divider"></div>
+    <div class="ic-dua-label">🤲 دعا</div>
+    <div class="ic-dua" id="icDua"></div>
+    <div class="ic-meaning" id="icMeaning"></div>
+    <div class="ic-tip" id="icTip"></div>
+  </div>
+</div>
+
+<!-- NAV BUTTONS -->
+<div id="nav-btns">
+  <button class="nav-btn nav-next" id="btnNext" onclick="nextStep()">➡</button>
+  <button class="nav-btn" id="btnPrev" onclick="prevStep()">⬅</button>
+</div>
+
+<!-- BOTTOM STRIP -->
+<div id="strip-wrap">
+  <div id="strip"></div>
+</div>
+
+<!-- COMPLETION -->
+<div id="complete">
+  <div class="cp-icon">🎉</div>
+  <div class="cp-title">مبارک ہو!</div>
+  <div class="cp-msg" id="cpMsg"></div>
+  <div class="cp-dua" id="cpDua"></div>
+  <div class="cp-btns">
+    <button class="cbtn cbtn-p" onclick="restartTour()">🔄 دوبارہ</button>
+    <a href="/" class="cbtn cbtn-s">🏠 ہوم</a>
+    <a id="otherBtn" href="#" class="cbtn cbtn-s"></a>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//   TRUE 360° CSS-3D CYLINDER PANORAMA VIEWER
+//   - User is INSIDE the cylinder (like being inside a sphere)
+//   - No WebGL required — pure CSS3D + JavaScript
+//   - Real floor hotspots in 3D space (like real estate video)
+// ═══════════════════════════════════════════════════════════════
+
+// ── Config ──────────────────────────────────────────────────
+const N_FACES = 36;           // cylinder faces (every 10°)
+const RADIUS  = 1400;         // px — cylinder radius (user at center)
+const FACE_ANGLE = 360 / N_FACES;
+// Face width must cover the gap between adjacent faces
+const FACE_W = Math.ceil(2 * RADIUS * Math.tan(Math.PI / N_FACES)) + 2;
+
+// Floor hotspot 3D position
+const HS_DIST   = 550;    // px forward from center
+const HS_Y      = 480;    // px below eye level (floor depth)
+const HS_SIZE   = 90;     // hotspot div size
+
+// ── URL params ──────────────────────────────────────────────
+const urlP    = new URLSearchParams(location.search);
+const tourType = urlP.get('type') === 'madina' ? 'madina' : 'makkah';
+const other    = tourType === 'makkah' ? 'madina' : 'makkah';
+
+document.getElementById('ldIcon').textContent  = tourType === 'makkah' ? '🕋' : '🌿';
+document.getElementById('ldTitle').textContent = tourType === 'makkah'
+  ? 'مکہ مکرمہ — عمرہ ٹور' : 'مدینہ منورہ ٹور';
+document.getElementById('otherBtn').href        = `/tour?type=${other}`;
+document.getElementById('otherBtn').textContent = tourType === 'makkah' ? '🌿 مدینہ' : '🕋 مکہ';
+
+// ── State ────────────────────────────────────────────────────
+let tourData    = [];
+let currentStep = 0;
+let yaw         = 0;     // current display angle (degrees)
+let pitch       = 0;     // vertical tilt (-35 to +35)
+let targetYaw   = 0;
+let targetPitch = 0;
+let velYaw      = 0;     // inertia
+let velPitch    = 0;
+let isDragging  = false;
+let lastX = 0, lastY = 0;
+let prevX = 0, prevY = 0;
+let autoSpeed   = 0.12;  // degrees/frame auto-rotate
+let hintShown   = true;
+
+const camera   = document.getElementById('camera');
+const cylinder = document.getElementById('cylinder');
+const scene    = document.getElementById('scene');
+
+// ── Build the 3D cylinder ────────────────────────────────────
+function buildCylinder(imageUrl) {
+  // Remove old faces (keep hotspots separate)
+  cylinder.querySelectorAll('.pano-face').forEach(f => f.remove());
+
+  const vh = window.innerHeight;
+
+  for (let i = 0; i < N_FACES; i++) {
+    const face = document.createElement('div');
+    face.className = 'pano-face';
+    const angle = i * FACE_ANGLE;
+    const bgPosX = (i / N_FACES * 100).toFixed(3);
+
+    face.style.cssText = `
+      width:${FACE_W}px;
+      height:${vh * 1.5}px;
+      top:50%;
+      left:50%;
+      margin-left:${-FACE_W/2}px;
+      margin-top:${-vh * 0.75}px;
+      background-image:url('${imageUrl}');
+      background-size:${N_FACES * 100}% 120%;
+      background-position-x:${bgPosX}%;
+      background-position-y:center;
+      transform:rotateY(${angle}deg) translateZ(${RADIUS}px);
+    `;
+    cylinder.appendChild(face);
+  }
+}
+
+// ── Floor Hotspots (TRUE 3D, inside the cylinder) ───────────
+function buildHotspots(stepIdx) {
+  cylinder.querySelectorAll('.hs-3d').forEach(h => h.remove());
+
+  if (stepIdx < tourData.length - 1) {
+    // FORWARD hotspot — directly ahead
+    makeFloorHotspot({
+      angleOffset: 0,          // straight ahead
+      dist:        HS_DIST,
+      yOffset:     HS_Y,
+      label:       tourData[stepIdx + 1].title,
+      onClick:     nextStep,
+      big:         true
+    });
+  }
+
+  if (stepIdx > 0) {
+    // BACKWARD hotspot — behind (smaller)
+    makeFloorHotspot({
+      angleOffset: 175,        // nearly behind
+      dist:        HS_DIST * 0.65,
+      yOffset:     HS_Y * 0.9,
+      label:       tourData[stepIdx - 1].title,
+      onClick:     prevStep,
+      big:         false
+    });
+  }
+}
+
+function makeFloorHotspot({ angleOffset, dist, yOffset, label, onClick, big }) {
+  const sz   = big ? HS_SIZE : HS_SIZE * 0.7;
+  const half = sz / 2;
+
+  const el = document.createElement('div');
+  el.className = 'hs-3d';
+  el.style.cssText = `
+    width:${sz}px; height:${sz}px;
+    margin:${-half}px ${-half}px;
+    transform:rotateY(${angleOffset}deg) translateZ(${dist}px) translateY(${yOffset}px) rotateX(90deg);
+    pointer-events:all;
+    cursor:pointer;
+  `;
+
+  // SVG white circle (identical to real estate video floor dots)
+  const r1 = big ? 38 : 28;
+  const r2 = big ? 28 : 20;
+  const r3 = big ? 16 : 11;
+
+  el.innerHTML = `
+    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" class="hs-svg">
+      <circle class="hs-ring-outer" cx="40" cy="40" r="${r1}"
+        fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+      <circle class="hs-ring-inner" cx="40" cy="40" r="${r2}"
+        fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>
+      <circle cx="40" cy="40" r="${r3}"
+        fill="rgba(255,255,255,0.92)"/>
+    </svg>
+  `;
+
+  el.title = label;
+  el.addEventListener('click', e => { e.stopPropagation(); onClick(); });
+  el.addEventListener('touchend', e => { e.stopPropagation(); e.preventDefault(); onClick(); });
+
+  cylinder.appendChild(el);
+}
+
+// ── Apply camera transform ───────────────────────────────────
+function applyCamera() {
+  camera.style.transform = `rotateX(${pitch}deg) rotateY(${-yaw}deg)`;
+}
+
+// ── Animation loop ───────────────────────────────────────────
+let rafId = null;
+function startLoop() {
+  function tick() {
+    if (!isDragging) {
+      // Auto-rotate
+      targetYaw += autoSpeed;
+
+      // Apply inertia after drag
+      if (Math.abs(velYaw) > 0.01) {
+        targetYaw += velYaw;
+        velYaw *= 0.92;   // friction
+      }
+      if (Math.abs(velPitch) > 0.01) {
+        targetPitch += velPitch;
+        velPitch *= 0.92;
+      }
+    }
+
+    // Clamp pitch
+    targetPitch = Math.max(-40, Math.min(40, targetPitch));
+
+    // Smooth lerp
+    yaw   += (targetYaw   - yaw)   * 0.12;
+    pitch += (targetPitch - pitch) * 0.12;
+
+    applyCamera();
+    rafId = requestAnimationFrame(tick);
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+// ── Mouse events ─────────────────────────────────────────────
+scene.addEventListener('mousedown', e => {
+  if (e.target.closest('.hs-3d')) return;
+  isDragging = true;
+  lastX = prevX = e.clientX;
+  lastY = prevY = e.clientY;
+  velYaw = velPitch = 0;
+  scene.classList.add('dragging');
+  hideHint();
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - lastX;
+  const dy = e.clientY - lastY;
+
+  targetYaw   -= dx * 0.25;
+  targetPitch += dy * 0.18;
+
+  velYaw   = -(e.clientX - prevX) * 0.25;
+  velPitch =  (e.clientY - prevY) * 0.18;
+
+  prevX = lastX; prevY = lastY;
+  lastX = e.clientX; lastY = e.clientY;
+});
+
+document.addEventListener('mouseup', () => {
+  if (!isDragging) return;
+  isDragging = false;
+  scene.classList.remove('dragging');
+});
+
+// ── Touch events ─────────────────────────────────────────────
+let touchLastX = 0, touchLastY = 0, touchPrevX = 0, touchPrevY = 0;
+scene.addEventListener('touchstart', e => {
+  if (e.target.closest('.hs-3d')) return;
+  isDragging = true;
+  touchLastX = touchPrevX = e.touches[0].clientX;
+  touchLastY = touchPrevY = e.touches[0].clientY;
+  velYaw = velPitch = 0;
+  hideHint();
+}, {passive:true});
+
+scene.addEventListener('touchmove', e => {
+  if (!isDragging || !e.touches.length) return;
+  const dx = e.touches[0].clientX - touchLastX;
+  const dy = e.touches[0].clientY - touchLastY;
+
+  targetYaw   -= dx * 0.3;
+  targetPitch += dy * 0.2;
+
+  velYaw   = -(e.touches[0].clientX - touchPrevX) * 0.3;
+  velPitch =  (e.touches[0].clientY - touchPrevY) * 0.2;
+
+  touchPrevX = touchLastX; touchPrevY = touchLastY;
+  touchLastX = e.touches[0].clientX;
+  touchLastY = e.touches[0].clientY;
+  e.preventDefault();
+}, {passive:false});
+
+scene.addEventListener('touchend', () => { isDragging = false; });
+
+// ── Keyboard ─────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'n') nextStep();
+  if (e.key === 'ArrowLeft'  || e.key === 'p') prevStep();
+  if (e.key === 'Escape')   toggleInfo();
+});
+
+// ── Load a scene ─────────────────────────────────────────────
+let isTransitioning = false;
+function loadScene(idx, animate = true) {
+  if (isTransitioning || idx < 0 || idx >= tourData.length) return;
+  currentStep = idx;
+  const step  = tourData[idx];
+
+  if (animate) {
+    isTransitioning = true;
+    // Fade out
+    cylinder.style.transition = 'opacity 0.5s ease';
+    cylinder.style.opacity = '0';
+
+    setTimeout(() => {
+      buildCylinder(step.panorama);
+      buildHotspots(idx);
+      // Reset yaw to step default
+      yaw = targetYaw = step.yaw || 0;
+      pitch = targetPitch = -(step.pitch || 0);
+      applyCamera();
+
+      cylinder.style.opacity = '1';
+      isTransitioning = false;
+    }, 500);
+  } else {
+    buildCylinder(step.panorama);
+    buildHotspots(idx);
+    yaw = targetYaw = step.yaw || 0;
+    pitch = targetPitch = -(step.pitch || 0);
+    applyCamera();
+  }
+
+  updateUI(step, idx);
+}
+
+// ── Update all UI elements ────────────────────────────────────
+function updateUI(step, idx) {
+  document.getElementById('hudStep').textContent    = `${idx+1}/${tourData.length}`;
+  document.getElementById('hudTitle').textContent   = step.title || '';
+  document.getElementById('icBadge').textContent    = step.badge || `قدم ${idx+1}`;
+  document.getElementById('icIcon').textContent     = step.icon  || '🕌';
+  document.getElementById('icArabic').textContent   = step.title || '';
+  document.getElementById('icUrdu').textContent     = step.instruction || '';
+  document.getElementById('icDua').textContent      = step.arabicDua  || '';
+  document.getElementById('icMeaning').textContent  = step.duaMeaning || '';
+  document.getElementById('icTip').textContent      = step.tip        || '';
+
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = idx === tourData.length - 1 ? '✅' : '➡';
+
+  document.getElementById('btnPrev').disabled = idx === 0;
+
+  updateStrip(idx);
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function nextStep() {
+  if (currentStep >= tourData.length - 1) { showComplete(); return; }
+  loadScene(currentStep + 1);
+}
+function prevStep() {
+  if (currentStep > 0) loadScene(currentStep - 1);
+}
+function restartTour() {
+  document.getElementById('complete').classList.remove('show');
+  loadScene(0, false);
+}
+function showComplete() {
+  const s = tourData[tourData.length - 1];
+  document.getElementById('cpMsg').textContent = s.instruction || 'مبارک!';
+  document.getElementById('cpDua').textContent = s.arabicDua   || '';
+  document.getElementById('complete').classList.add('show');
+}
+
+// ── Thumbnail strip ───────────────────────────────────────────
+function buildStrip() {
+  const strip = document.getElementById('strip');
+  strip.innerHTML = '';
+  tourData.forEach((step, i) => {
+    const t = document.createElement('div');
+    t.className = 'thumb';
+    t.id = `th-${i}`;
+    const src = step.panorama.replace('_pano.jpg', '.jpg').replace('_pano.jpeg', '.jpeg');
+    t.innerHTML = `
+      <div class="thumb-n">${i+1}</div>
+      <img class="thumb-img" src="${src}" onerror="this.src='${step.panorama}'" loading="lazy">
+      <div class="thumb-lbl">${step.icon||''} ${step.title}</div>
+    `;
+    t.onclick = () => loadScene(i);
+    strip.appendChild(t);
+  });
+}
+function updateStrip(idx) {
+  document.querySelectorAll('.thumb').forEach((t,i) => t.classList.toggle('active', i===idx));
+  const active = document.getElementById(`th-${idx}`);
+  if (active) active.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}
+
+// ── Info card toggle ──────────────────────────────────────────
+let infoVisible = true;
+function toggleInfo() {
+  infoVisible = !infoVisible;
+  document.getElementById('info-card').classList.toggle('hidden', !infoVisible);
+}
+
+// ── Fullscreen ────────────────────────────────────────────────
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+// ── Drag hint ─────────────────────────────────────────────────
+let hintTimer;
+function hideHint() {
+  if (!hintShown) return;
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => {
+    document.getElementById('drag-hint').classList.add('hide');
+    hintShown = false;
+  }, 2500);
+}
+setTimeout(hideHint, 4000);
+
+// ── INIT ─────────────────────────────────────────────────────
+async function init() {
+  try {
+    const res  = await fetch('/api/tour');
+    const data = await res.json();
+    tourData   = data[tourType] || [];
+
+    if (!tourData.length) {
+      alert('Tour data not found!');
+      return;
+    }
+
+    buildStrip();
+    loadScene(0, false);
+    startLoop();
+
+    // Hide loader
+    setTimeout(() => {
+      document.getElementById('loader').classList.add('out');
+    }, 2200);
+
+  } catch(err) {
+    console.error('Init error:', err);
+    document.getElementById('ldTitle').textContent = 'ایرر: ' + err.message;
+  }
+}
+
+// Rebuild faces on resize
+window.addEventListener('resize', () => {
+  if (tourData.length) buildCylinder(tourData[currentStep].panorama);
+});
+
+init();
+</script>
+</body>
+</html>
