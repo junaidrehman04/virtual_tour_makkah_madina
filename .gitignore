@@ -39,5 +39,21 @@ env/
 # OS / Editor
 .DS_Store
 Thumbs.db
+desktop.ini
+*.orig
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Optional npm lock files
+package-lock.json
+yarn.lock
+
+# Coverage / testing
+coverage/
+.nyc_output/
+
+# Uploads / temp media
+uploads/
+temp_images/
