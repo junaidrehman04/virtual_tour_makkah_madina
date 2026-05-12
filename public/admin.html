@@ -13,178 +13,147 @@
     --green-mid: #2d6b4e;
     --dark: #0d1f17;
   }
-  body {
-    background: var(--dark);
-    color: #fff;
-    font-family: 'Amiri', serif;
-    min-height: 100vh;
-  }
+  body { background: var(--dark); color: #fff; font-family: 'Amiri', serif; min-height: 100vh; }
   header {
     background: linear-gradient(90deg, var(--dark), var(--green));
     border-bottom: 1px solid rgba(212,168,67,.3);
     padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
   }
   header h1 { font-size: 1.5rem; color: var(--gold); }
   header a { color: rgba(255,255,255,.5); text-decoration: none; font-size: .9rem; }
   header a:hover { color: var(--gold); }
-
-  .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-
-  /* ─── Cards ─── */
+  .container { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
   .card {
     background: rgba(255,255,255,.04);
     border: 1px solid rgba(212,168,67,.15);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
   }
   .card h2 {
-    font-size: 1.2rem;
-    color: var(--gold);
-    margin-bottom: 1rem;
-    border-bottom: 1px solid rgba(212,168,67,.2);
-    padding-bottom: .5rem;
+    font-size: 1.2rem; color: var(--gold); margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(212,168,67,.2); padding-bottom: .5rem;
   }
-
-  /* ─── Form ─── */
   .form-row { margin-bottom: 1rem; }
   label { display: block; color: rgba(255,255,255,.6); font-size: .85rem; margin-bottom: .4rem; letter-spacing: .05em; }
   select, input[type="text"] {
-    width: 100%;
-    padding: .7rem .9rem;
+    width: 100%; padding: .7rem .9rem;
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.15);
-    border-radius: 8px;
-    color: #fff;
-    font-size: .95rem;
-    outline: none;
-    transition: border-color .25s;
+    border-radius: 8px; color: #fff; font-size: .95rem; outline: none; transition: border-color .25s;
   }
   select:focus, input:focus { border-color: var(--gold); }
   select option { background: #1a4731; }
-
-  /* ─── File Drop Zone ─── */
   .drop-zone {
     border: 2px dashed rgba(212,168,67,.3);
-    border-radius: 12px;
-    padding: 2.5rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all .25s;
-    position: relative;
+    border-radius: 12px; padding: 2.5rem; text-align: center; cursor: pointer;
+    transition: all .25s; position: relative;
   }
-  .drop-zone:hover, .drop-zone.dragover {
-    border-color: var(--gold);
-    background: rgba(212,168,67,.05);
-  }
-  .drop-zone input[type="file"] {
-    position: absolute; inset: 0;
-    opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--gold); background: rgba(212,168,67,.05); }
+  .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
   .drop-icon { font-size: 2.5rem; margin-bottom: .5rem; }
   .drop-text { color: rgba(255,255,255,.6); font-size: .9rem; }
   .drop-hint { color: rgba(255,255,255,.35); font-size: .75rem; margin-top: .3rem; }
 
-  /* ─── Preview ─── */
-  #preview-container {
-    display: none;
-    margin-top: 1rem;
-    border-radius: 8px;
-    overflow: hidden;
+  /* ── Preview with hotspot editor ── */
+  #preview-section { display: none; margin-top: 1.2rem; }
+  #preview-hint {
+    background: rgba(212,168,67,.1); border: 1px solid rgba(212,168,67,.3);
+    border-radius: 8px; padding: .6rem 1rem; margin-bottom: .8rem;
+    color: var(--gold); font-size: .85rem; text-align: center;
   }
-  #preview-img { width: 100%; max-height: 200px; object-fit: cover; }
+  #preview-wrap {
+    position: relative; border-radius: 10px; overflow: hidden;
+    cursor: crosshair; user-select: none;
+    border: 2px solid rgba(212,168,67,.2);
+    background: #000;
+    max-height: 380px;
+  }
+  #preview-img {
+    width: 100%; display: block;
+    max-height: 380px; object-fit: contain;
+    /* NO pointer-events drag — image is static, only panning via our wrapper */
+    pointer-events: none;
+  }
 
-  /* ─── Button ─── */
+  /* Hotspot markers on preview */
+  .hs-marker {
+    position: absolute;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.95) 30%, rgba(212,168,67,.6) 70%, transparent 100%);
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer;
+    animation: mPulse 1.8s ease-in-out infinite;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 14px 6px rgba(212,168,67,.4);
+    z-index: 10;
+  }
+  .hs-marker:hover { background: radial-gradient(circle, #fff 30%, rgba(255,100,100,.6) 70%, transparent 100%); }
+  .hs-marker .hs-del {
+    position: absolute; top: -8px; right: -8px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #c0392b; color: #fff; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0; transition: opacity .2s;
+    font-style: normal;
+  }
+  .hs-marker:hover .hs-del { opacity: 1; }
+  @keyframes mPulse {
+    0%,100% { box-shadow: 0 0 14px 6px rgba(212,168,67,.4); transform: translate(-50%,-50%) scale(1); }
+    50%      { box-shadow: 0 0 24px 12px rgba(212,168,67,.6); transform: translate(-50%,-50%) scale(1.15); }
+  }
+
+  /* Hotspot list */
+  #hs-list { margin-top: 1rem; }
+  .hs-row {
+    display: flex; align-items: center; gap: .6rem;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px; padding: .5rem .8rem; margin-bottom: .5rem;
+  }
+  .hs-row-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(212,168,67,.2); border: 1px solid var(--gold);
+    color: var(--gold); font-size: .8rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .hs-row select {
+    flex: 1; padding: .4rem .6rem; font-size: .8rem;
+  }
+  .hs-row-del {
+    background: rgba(200,50,50,.15); border: 1px solid rgba(200,50,50,.3);
+    color: #ff8888; border-radius: 6px; padding: .3rem .6rem;
+    cursor: pointer; font-size: .8rem;
+  }
+  .hs-row-del:hover { background: rgba(200,50,50,.3); }
+
   .btn-upload {
-    width: 100%;
-    padding: .9rem;
+    width: 100%; padding: .9rem;
     background: linear-gradient(135deg, var(--green-mid), var(--green));
-    color: var(--gold);
-    border: 1px solid rgba(212,168,67,.4);
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
-    font-family: 'Amiri', serif;
-    transition: all .25s;
-    margin-top: 1rem;
+    color: var(--gold); border: 1px solid rgba(212,168,67,.4);
+    border-radius: 10px; font-size: 1rem; cursor: pointer;
+    font-family: 'Amiri', serif; transition: all .25s; margin-top: 1rem;
   }
   .btn-upload:hover { background: linear-gradient(135deg, #3d8c65, var(--green-mid)); }
   .btn-upload:disabled { opacity: .5; cursor: not-allowed; }
 
-  /* ─── Progress Bar ─── */
   #progress-wrap { display: none; margin-top: 1rem; }
-  #progress-bar {
-    height: 6px;
-    background: rgba(255,255,255,.1);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: .5rem;
-  }
-  #progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--green-mid), var(--gold));
-    border-radius: 3px;
-    width: 0;
-    transition: width .3s;
-  }
+  #progress-bar { height: 6px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; margin-bottom: .5rem; }
+  #progress-fill { height: 100%; background: linear-gradient(90deg, var(--green-mid), var(--gold)); border-radius: 3px; width: 0; transition: width .3s; }
   #progress-text { color: rgba(255,255,255,.5); font-size: .8rem; text-align: center; }
 
-  /* ─── Alert ─── */
-  .alert {
-    padding: .8rem 1rem;
-    border-radius: 8px;
-    margin-top: 1rem;
-    font-size: .9rem;
-    display: none;
-  }
+  .alert { padding: .8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: .9rem; display: none; }
   .alert.success { background: rgba(74,158,118,.2); border: 1px solid var(--green-mid); color: #7ed6a8; }
   .alert.error   { background: rgba(200,50,50,.2);  border: 1px solid #c83232; color: #ff9999; }
 
-  /* ─── Image Grid ─── */
-  .img-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: .75rem;
-    margin-top: 1rem;
-  }
-  .img-item {
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,.1);
-    cursor: pointer;
-    transition: transform .2s;
-    position: relative;
-  }
+  .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .75rem; margin-top: 1rem; }
+  .img-item { border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); cursor: pointer; transition: transform .2s; position: relative; }
   .img-item:hover { transform: scale(1.03); border-color: var(--gold); }
   .img-item img { width: 100%; height: 80px; object-fit: cover; display: block; }
-  .img-name {
-    padding: .3rem .5rem;
-    font-size: .65rem;
-    color: rgba(255,255,255,.5);
-    background: rgba(0,0,0,.4);
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .loc-tabs {
-    display: flex;
-    gap: .5rem;
-    margin-bottom: 1rem;
-  }
-  .loc-tab {
-    padding: .4rem .9rem;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,.15);
-    background: transparent;
-    color: rgba(255,255,255,.5);
-    cursor: pointer;
-    font-size: .85rem;
-    transition: all .2s;
-  }
+  .img-name { padding: .3rem .5rem; font-size: .65rem; color: rgba(255,255,255,.5); background: rgba(0,0,0,.4); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .loc-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  .loc-tab { padding: .4rem .9rem; border-radius: 20px; border: 1px solid rgba(255,255,255,.15); background: transparent; color: rgba(255,255,255,.5); cursor: pointer; font-size: .85rem; transition: all .2s; }
   .loc-tab.active { background: rgba(212,168,67,.15); border-color: var(--gold); color: var(--gold); }
 </style>
 </head>
@@ -227,8 +196,18 @@
       <div class="drop-hint">JPG، PNG، WebP • زیادہ سے زیادہ 80MB • 4096×2048 بہترین</div>
     </div>
 
-    <div id="preview-container">
-      <img id="preview-img" alt="Preview">
+    <!-- Preview + Hotspot Editor -->
+    <div id="preview-section">
+      <div id="preview-hint">
+        ➡️ تصویر پر جہاں <strong>اگلے مقام کا تیر</strong> رکھنا ہو وہاں <strong>کلک</strong> کریں — پھر نیچے سے destination منتخب کریں
+      </div>
+      <div id="preview-wrap">
+        <img id="preview-img" alt="Preview">
+        <!-- hotspot markers injected here -->
+      </div>
+
+      <!-- Hotspot list -->
+      <div id="hs-list"></div>
     </div>
 
     <div id="progress-wrap">
@@ -240,7 +219,7 @@
     <div class="alert error"   id="alert-error">❌ ایرر: اپلوڈ نہیں ہوا</div>
 
     <button class="btn-upload" id="btnUpload" onclick="uploadFile()">⬆️ اپلوڈ کریں</button>
-  </div><!-- /card -->
+  </div>
 
   <!-- Image Gallery -->
   <div class="card">
@@ -254,10 +233,10 @@
     </div>
   </div>
 
-</div><!-- /container -->
+</div>
 
 <script>
-// ─── Load tour data for scene selector ───────────────────────────────────
+// ─── Tour config ──────────────────────────────────────────────────────────
 let tourConfig = {};
 
 async function loadTourConfig() {
@@ -277,6 +256,8 @@ function updateSceneSelector(loc) {
     opt.textContent = `${s.step}. ${s.titleUrdu}`;
     sel.appendChild(opt);
   });
+  // rebuild hotspot destination dropdowns
+  renderHsList();
 }
 
 document.getElementById('location').addEventListener('change', e => {
@@ -284,17 +265,25 @@ document.getElementById('location').addEventListener('change', e => {
   loadImages(e.target.value);
 });
 
-// ─── Preview ─────────────────────────────────────────────────────────────
+// ─── Hotspot state ────────────────────────────────────────────────────────
+// Each hotspot: { xPct, yPct, destId }  (xPct/yPct in 0-100 relative to image)
+let hotspots = [];
+
+// ─── Preview ──────────────────────────────────────────────────────────────
 function previewFile(input) {
   const file = input.files[0];
   if (!file) return;
   const url = URL.createObjectURL(file);
-  document.getElementById('preview-img').src = url;
-  document.getElementById('preview-container').style.display = 'block';
+  const img = document.getElementById('preview-img');
+  img.src = url;
+  hotspots = [];
+  renderHsMarkers();
+  renderHsList();
+  document.getElementById('preview-section').style.display = 'block';
   hideAlerts();
 }
 
-// Drag-drop highlight
+// Drag-drop
 const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
@@ -306,7 +295,86 @@ dz.addEventListener('drop', e => {
   previewFile(fi);
 });
 
-// ─── Upload ──────────────────────────────────────────────────────────────
+// ─── Click on preview to place hotspot ────────────────────────────────────
+document.getElementById('preview-wrap').addEventListener('click', function(e) {
+  // Ignore clicks on existing markers/delete buttons
+  if (e.target.closest('.hs-marker')) return;
+
+  const rect = this.getBoundingClientRect();
+  const xPct = ((e.clientX - rect.left) / rect.width)  * 100;
+  const yPct = ((e.clientY - rect.top)  / rect.height) * 100;
+
+  hotspots.push({ xPct, yPct, destId: '' });
+  renderHsMarkers();
+  renderHsList();
+});
+
+function renderHsMarkers() {
+  const wrap = document.getElementById('preview-wrap');
+  // Remove old markers
+  wrap.querySelectorAll('.hs-marker').forEach(el => el.remove());
+
+  hotspots.forEach((hs, i) => {
+    const marker = document.createElement('div');
+    marker.className = 'hs-marker';
+    marker.style.left = hs.xPct + '%';
+    marker.style.top  = hs.yPct + '%';
+    marker.title = `تیر نمبر ${i+1}`;
+    marker.innerHTML = `➡️<i class="hs-del" data-i="${i}" title="حذف کریں">✕</i>`;
+
+    marker.querySelector('.hs-del').addEventListener('click', function(e) {
+      e.stopPropagation();
+      hotspots.splice(parseInt(this.dataset.i), 1);
+      renderHsMarkers();
+      renderHsList();
+    });
+
+    wrap.appendChild(marker);
+  });
+}
+
+function renderHsList() {
+  const loc = document.getElementById('location').value;
+  const scenes = tourConfig[loc] || [];
+  const container = document.getElementById('hs-list');
+
+  if (!hotspots.length) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:.8rem;margin-bottom:.5rem;">📍 رکھے گئے تیر — ہر تیر کے لیے destination منتخب کریں:</div>';
+
+  hotspots.forEach((hs, i) => {
+    const row = document.createElement('div');
+    row.className = 'hs-row';
+
+    let options = '<option value="">-- اگلا مقام --</option>';
+    scenes.forEach(s => {
+      const sel = hs.destId === s.id ? 'selected' : '';
+      options += `<option value="${s.id}" ${sel}>${s.step}. ${s.titleUrdu}</option>`;
+    });
+
+    row.innerHTML = `
+      <div class="hs-row-num">${i+1}</div>
+      <select data-i="${i}">${options}</select>
+      <button class="hs-row-del" data-i="${i}">🗑️ حذف</button>
+    `;
+
+    row.querySelector('select').addEventListener('change', function() {
+      hotspots[parseInt(this.dataset.i)].destId = this.value;
+    });
+    row.querySelector('.hs-row-del').addEventListener('click', function() {
+      hotspots.splice(parseInt(this.dataset.i), 1);
+      renderHsMarkers();
+      renderHsList();
+    });
+
+    container.appendChild(row);
+  });
+}
+
+// ─── Upload ───────────────────────────────────────────────────────────────
 async function uploadFile() {
   const file = document.getElementById('fileInput').files[0];
   if (!file) { showAlert('error', '⚠️ پہلے تصویر منتخب کریں'); return; }
@@ -318,6 +386,10 @@ async function uploadFile() {
   fd.append('panorama', file);
   fd.append('location', loc);
   if (scId) fd.append('scene_id', scId);
+  // Send hotspots data as JSON
+  if (hotspots.length) {
+    fd.append('hotspots', JSON.stringify(hotspots));
+  }
 
   document.getElementById('btnUpload').disabled = true;
   document.getElementById('progress-wrap').style.display = 'block';
@@ -338,11 +410,12 @@ async function uploadFile() {
       document.getElementById('btnUpload').disabled = false;
       if (xhr.status === 200) {
         const data = JSON.parse(xhr.responseText);
-        showAlert('success', `✅ کامیاب! تصویر محفوظ: ${data.path}`);
+        showAlert('success', `✅ کامیاب! تصویر محفوظ: ${data.path}${hotspots.length ? ` | ${hotspots.length} تیر محفوظ` : ''}`);
         loadImages(loc);
-        // reset file input
+        // reset
         document.getElementById('fileInput').value = '';
-        document.getElementById('preview-container').style.display = 'none';
+        document.getElementById('preview-section').style.display = 'none';
+        hotspots = [];
       } else {
         showAlert('error', '❌ اپلوڈ ناکام: ' + xhr.responseText);
       }
@@ -362,26 +435,18 @@ async function uploadFile() {
   }
 }
 
-// ─── Load Image Gallery ──────────────────────────────────────────────────
+// ─── Image Gallery ────────────────────────────────────────────────────────
 async function loadImages(loc, tabEl) {
-  // Update tabs
   if (tabEl) {
     document.querySelectorAll('.loc-tab').forEach(t => t.classList.remove('active'));
     tabEl.classList.add('active');
   }
-
   const grid = document.getElementById('imgGrid');
   grid.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:.85rem;">لوڈ ہو رہا ہے...</div>';
-
   try {
     const res   = await fetch(`/api/images/${loc}`);
     const files = await res.json();
-
-    if (!files.length) {
-      grid.innerHTML = '<div style="color:rgba(255,255,255,.3);">کوئی تصویر نہیں</div>';
-      return;
-    }
-
+    if (!files.length) { grid.innerHTML = '<div style="color:rgba(255,255,255,.3);">کوئی تصویر نہیں</div>'; return; }
     grid.innerHTML = '';
     files.forEach(f => {
       const div = document.createElement('div');
